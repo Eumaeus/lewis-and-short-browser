@@ -179,15 +179,20 @@ object MainController {
 
 	/* Querying Methods */
 
-	def initLsjSingleQuery(idString:String):Unit = {
+	def initLsjSingleQuery(idString:String, clearBubbles:Boolean = false):Unit = {
 
 		// Init query to get that going
 
 		val lsjUrn:Cite2Urn = MainModel.lexiconUrn.addSelector(idString)
 		val queryString:String = s"objects/${lsjUrn}"
 
-		val task = Task{ MainController.getJson(callback = MainController.processLsj, query = queryString, url = MainModel.serviceUrl.value, urn = Some(lsjUrn)) }
-		val future = task.runAsync
+		if (clearBubbles){
+			val task = Task{ MainController.getJson(callback = MainController.processLsj, query = queryString, url = MainModel.serviceUrl.value, urn = Some(lsjUrn)) }
+			val future = task.runAsync
+		} else {
+			val task = Task{ MainController.getJson(callback = MainController.processResult, query = queryString, url = MainModel.serviceUrl.value, urn = Some(lsjUrn)) }
+			val future = task.runAsync
+		}
 
 		// Deal with UI while we wait
 		MainModel.selectedInShownIndex.value = Some(idString)
@@ -230,11 +235,21 @@ object MainController {
 
 	def processLsj(jstring:String, urn:Option[Urn] = None):Unit = {
 		val objJson:CiteObjJson = CiteObjJson()
-		val vco:Vector[CiteObject] = objJson.vectorOfCiteObjects(jstring)
+		val unsortedvco:Vector[CiteObject] = objJson.vectorOfCiteObjects(jstring)
+		val vco:Vector[CiteObject] = unsortedvco.sortBy(_.propertyValue(MainModel.sortProperty).asInstanceOf[Int])
+		MainController.updateUserMessage(s"Found: ${vco.size}.",1)
+		MainModel.updateLexEntries(vco)	
+		MainModel.updateBubbles(vco)	
+	}
+
+	// this one doesn't clear result bubbles
+	def processResult(jstring:String, urn:Option[Urn] = None):Unit = {
+		val objJson:CiteObjJson = CiteObjJson()
+		val unsortedvco:Vector[CiteObject] = objJson.vectorOfCiteObjects(jstring)
+		val vco:Vector[CiteObject] = unsortedvco.sortBy(_.propertyValue(MainModel.sortProperty).asInstanceOf[Int])
 		MainController.updateUserMessage(s"Found: ${vco.size}.",1)
 		MainModel.updateLexEntries(vco)	
 	}
-
 	def initUrnQuery(urnString:String):Unit = {
 		try {
 			val u:Cite2Urn = Cite2Urn(urnString)
@@ -246,7 +261,24 @@ object MainController {
 
 	def initUrnQuery(urn:Cite2Urn):Unit = {
 		try {
-			val lsjUrn:Cite2Urn = urn
+			val tempUrn:Cite2Urn = urn
+			// Sort out versions
+			val lsjUrn:Cite2Urn = {
+			tempUrn.versionOption match {
+					case Some(v) => {
+						urn.objectComponentOption match {
+							case None => tempUrn.dropVersion.addVersion(MainModel.supportedVersion).dropSelector.addSelector(urn.objectComponent)
+							case Some(oc) => tempUrn.dropVersion.addVersion(MainModel.supportedVersion).dropSelector.addSelector(urn.objectComponent)
+						}
+					}
+					case None => {
+						urn.objectComponentOption match {
+							case None => tempUrn.addVersion(MainModel.supportedVersion).addSelector(urn.objectComponent)
+							case Some(oc) => tempUrn.addVersion(MainModel.supportedVersion)
+						}
+					}
+				}
+			}
 			val queryString:String = s"objects/${lsjUrn}"
 
 			val task = Task{ MainController.getJson(callback = MainController.processLsj, query = queryString, url = MainModel.serviceUrl.value, urn = Some(lsjUrn)) }
@@ -303,7 +335,7 @@ object MainController {
 	def initTextQuery(s:String):Unit = {
 		try {
 			val queryString:String = s"objects/find/regexmatch/${MainModel.lexiconUrn}?find=[ *]${s}[ *,.;:]"
-			val task = Task{ MainController.getJson(callback = MainController.processLsj, query = queryString, url = MainModel.serviceUrl.value, urn = Some(MainModel.lexiconUrn)) }
+			val task = Task{ MainController.getJson(callback = MainController.processLsj, query = queryString, url = MainModel.serviceUrl.value, urn = None) }
 			val future = task.runAsync
 			MainModel.clearSidebar
 		} catch {

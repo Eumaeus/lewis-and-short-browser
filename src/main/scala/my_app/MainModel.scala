@@ -25,6 +25,9 @@ import scala.scalajs.js.Dynamic.{ global => g }
 object MainModel {
 
 	val lexiconUrn:Cite2Urn = Cite2Urn("urn:cite2:hmt:ls.markdown:")
+	val supportedVersion:String = "markdown"
+	val sortProperty:Cite2Urn = Cite2Urn("urn:cite2:hmt:ls.markdown.seq:")
+
 
 	val indexFile:String = "https://raw.githubusercontent.com/Eumaeus/cex_lewis_and_short/master/ls_indexData.txt"
 
@@ -48,6 +51,27 @@ object MainModel {
 	def updateLexEntries(vco:Vector[CiteObject]):Unit = {
 		currentLexEntries.value.clear
 		for (le <- vco) { currentLexEntries.value += le }
+	}
+	def updateBubbles(vco:Vector[CiteObject]):Unit = {
+		// show little tabs
+		val justIds:Vector[String] = vco.map( _.urn.objectComponent )
+		queryIndexFromFoundEntries(justIds)
+	}
+
+	def queryIndexFromFoundEntries(ids:Vector[String]) = {
+		MainModel.mainIndex.value match {
+			case None => // do nothing
+				case Some(idx) => {
+					val foundStuff:Vector[MainModel.LexIndex] = {
+						idx.filter(i => ids.contains(i.selector))
+					}
+					//MainModel.clearSidebar
+					MainModel.currentResults.value.clear
+					for (i <- foundStuff) {
+						MainModel.currentResults.value += i
+					}
+				}
+		}
 	}
 
 	val alphaEntries:Vector[(String,String)] = {
@@ -138,6 +162,7 @@ object MainModel {
 	val userMessageVisibility = Var("app_hidden")
 
 	var msgTimer:scala.scalajs.js.timers.SetTimeoutHandle = null
+	var typingTimer:scala.scalajs.js.timers.SetTimeoutHandle = null
 
 	val lexCandidates = Vars.empty[MainModel.LexIndex]
 

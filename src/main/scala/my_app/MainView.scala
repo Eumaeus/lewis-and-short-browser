@@ -26,6 +26,21 @@ import monix.eval._
 object MainView {
 
 
+	def clearGreekSearchBox:Unit = {
+		val field = js.Dynamic.global.document.getElementById("greekInput").asInstanceOf[HTMLInputElement]
+		field.value = ""
+	}
+
+	def clearTextSearchBox:Unit = {
+		val field = js.Dynamic.global.document.getElementById("englishInput").asInstanceOf[HTMLInputElement]
+		field.value = ""
+	}
+
+	def clearUrnSearchBox:Unit = {
+		val field = js.Dynamic.global.document.getElementById("passageInput").asInstanceOf[HTMLInputElement]
+		field.value = ""
+	}
+    
 	@dom
 	def mainMessageDiv = {
 			<div id="main_message" class={ s"app_message ${MainModel.userMessageVisibility.bind} ${MainModel.userAlert.bind}" } >
@@ -46,7 +61,7 @@ object MainView {
 
 		<article id="main_Container">
 
-		<p id="menu"> <a href="http://cite-architecture.github.io">The CITE Archtecture</a> | <a href="https://eumaeus.github.io/2018/10/30/lsj.html">About this project</a> </p>
+		<p id="menu"> <a href="http://cite-architecture.github.io">The CITE Archtecture</a> | <a href="https://eumaeus.github.io/2018/11/03/ls.html">About this project</a> | <a href="http://folio2.furman.edu/lsj/index.html"><i>LSJ</i> Greek Lexicon</a> </p>
 
 		
 		{ MainView.alphaList.bind }
@@ -87,7 +102,9 @@ object MainView {
 							}
 						}
 						onclick={ event: Event => {
-							MainController.initLsjSingleQuery(v.selector)
+							MainView.clearTextSearchBox
+							MainView.clearUrnSearchBox
+							MainController.initLsjSingleQuery(v.selector, true)
 						}}
 						>{ v.ucodeKey}</li>
 				}
@@ -102,7 +119,7 @@ object MainView {
 				for ( r <- MainModel.currentResults) yield {
 					<li id={ s"lexResultListItem_${r.selector}" }
 						onclick={ event: Event => {
-							MainController.initLsjSingleQuery(r.selector)
+							MainController.initLsjSingleQuery(r.selector, false)
 						}}
 						class={ 
 							MainModel.selectedInShownIndex.bind match {
@@ -203,8 +220,11 @@ object MainView {
 		val greekKeyUpHandler = { event: KeyboardEvent =>
 			(event.currentTarget, event.keyCode) match {
 				case(input: HTMLInputElement, _) =>  {
+					//O2Controller.validateUrn(s"${input.value.toString}")
+					//g.console.log(s"${MainModel.typingTimer}")
+					js.timers.clearTimeout(MainModel.typingTimer)
 					if (input.value.size > 1){
-						MainController.queryIndex(input.value.toString)
+						MainModel.typingTimer = js.timers.setTimeout(800){ MainController.queryIndex(input.value.toString) }
 					} else {
 						MainModel.currentResults.value.clear
 					}
@@ -239,7 +259,8 @@ object MainView {
 				onclick={ event: Event => {
 					MainController.updateUserMessage("Finding text in passages. Please be patient…",1)
 					val thisText:String = js.Dynamic.global.document.getElementById("englishInput").value.toString
-						
+					MainView.clearGreekSearchBox	
+					MainView.clearUrnSearchBox
 					val task = Task{MainController.initTextQuery(thisText)}	
 					val future = task.runAsync
 				}
@@ -303,7 +324,8 @@ object MainView {
 			onclick={ event: Event => {
 					MainController.updateUserMessage("Finding entry for URN. Please be patient…",1)
 					val thisEntry:String = js.Dynamic.global.document.getElementById("passageInput").value.toString
-					g.console.log(thisEntry)	
+					MainView.clearGreekSearchBox
+					MainView.clearTextSearchBox
 					val task = Task{MainController.initUrnQuery(thisEntry)}	
 					val future = task.runAsync
 				}

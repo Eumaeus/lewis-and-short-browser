@@ -6,7 +6,7 @@ The instance of the SCS-Akka service serving the *Lewis & Short* as a CITE Colle
 
 ## Current Version
 
-1.0.0
+1.2.2
 
 ## License
 

@@ -1,5 +1,5 @@
 
-/* LSJ specific */
+/* LS specific */
 
 p#menu {
 	font-size: 80%;	
@@ -69,13 +69,13 @@ div#searchDiv{
 div#searchEnglishDiv {
 	position: absolute;
 	top: 5em;
-	left: 33em;
+	left: 36em;
 }
 
 div#passageInputDiv{
 	position: absolute;
 	top: 5em;
-	left: 50em;
+	left: 55em;
 }
 
 button#searchButton, button#querySubmit {
@@ -232,7 +232,7 @@ ul#resultsList {
 	color: rgb(100,0,0);
 	margin-left: 0;
 	padding-left: 0;
-	margin-top:	6em;
+	margin-top:	7em;
 	max-height: 8em;
 	overflow: scroll;
 	cursor: pointer;
