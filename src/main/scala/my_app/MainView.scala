@@ -40,7 +40,7 @@ object MainView {
 		val field = js.Dynamic.global.document.getElementById("passageInput").asInstanceOf[HTMLInputElement]
 		field.value = ""
 	}
-    
+
 	@dom
 	def mainMessageDiv = {
 			<div id="main_message" class={ s"app_message ${MainModel.userMessageVisibility.bind} ${MainModel.userAlert.bind}" } >
@@ -74,9 +74,9 @@ object MainView {
 		<textarea id="hiddenTextArea"></textarea>
 		</article>
 		 <div class="push"></div>
-		<footer>
+		<div class="small-print">
 		{ footer.bind }
-		</footer>
+		</div>
 	</div>
 	}
 
@@ -119,6 +119,8 @@ object MainView {
 				for ( r <- MainModel.currentResults) yield {
 					<li id={ s"lexResultListItem_${r.selector}" }
 						onclick={ event: Event => {
+							MainView.clearTextSearchBox
+							MainView.clearUrnSearchBox
 							MainController.initLsjSingleQuery(r.selector, false)
 						}}
 						class={ 
@@ -169,17 +171,22 @@ object MainView {
 				val selectedText:String = thisTarget.text
 			    val hiddenTextArea = js.Dynamic.global.document.getElementById("hiddenTextArea")
 			    hiddenTextArea.textContent = selectedText.trim
+			    hiddenTextArea.focus()
 			    hiddenTextArea.select()
-			    val successful = document.execCommand("copy")
-				successful match {
-					case true => {
-						val message:String = s"""Copied "${selectedText}" to clipboard."""
-						MainController.updateUserMessage(message, 0)
+			    try {
+				    val successful = document.execCommand("copy")
+					successful match {
+						case true => {
+							val message:String = s"""Copied "${selectedText}" to clipboard."""
+							MainController.updateUserMessage(message, 0)
+						}
+						case false => {
+							val message:String = s"""Failed to copy "${selectedText}" to clipboard."""
+							MainController.updateUserMessage(message, 2)
+						}
 					}
-					case false => {
-						val message:String = s"""Failed to copy "${selectedText}" to clipboard."""
-						MainController.updateUserMessage(message, 2)
-					}
+				} catch {
+					case e:Exception => g.console.log(s"${e}")		
 				}
 			}}	> { u } </a></span>
 
@@ -360,7 +367,7 @@ object MainView {
 
 	@dom
 	def footer = {
-		<p> <em>A Latin Dictionary.</em> Founded on Andrews’ edition of Freund's Latin dictionary, revised, enlarged, and in great part rewritten by Charlton T. Lewis, Ph.D., and Charles Short, LL.D. (Oxford: Clarendon Press, 1879) Text provided by Perseus Digital Library, with funding from The National Endowment for the Humanities. Original version available for viewing and download at <a href="http://www.perseus.tufts.edu/">http://www.perseus.tufts.edu/</a>. This application is ©2018, Christopher W. Blackwell, licensed under the <a href="https://www.gnu.org/licenses/gpl-3.0.en.html">GPL 3.0</a>. CITE/CTS is ©2002–2018 Neel Smith and Christopher Blackwell. The implementations of the <a href="http://cite-architecture.github.io">CITE</a> were written by Neel Smith and Christopher Blackwell using <a href="https://www.scala-lang.org">Scala</a>, <a href="http://www.scala-js.org">Scala-JS</a>, and <a href="https://github.com/ThoughtWorksInc/Binding.scala">Binding.scala</a>. Licensed under the <a href="https://www.gnu.org/licenses/gpl-3.0.en.html">GPL 3.0</a>. The dictionary data is <a href="https://github.com/Eumaeus/cex_lewis_and_short">is on Github</a>. Sourcecode on <a href="https://github.com/Eumaeus/cite-lsj-browser">GitHub</a>. Report bugs by <a href="https://github.com/Eumaeus/cite-lsj-browser/issues">filing issues on GitHub.</a>
+		<p> <em>A Latin Dictionary.</em> Founded on Andrews’ edition of Freund's Latin dictionary, revised, enlarged, and in great part rewritten by Charlton T. Lewis, Ph.D., and Charles Short, LL.D. (Oxford: Clarendon Press, 1879) Text provided by Perseus Digital Library, with funding from The National Endowment for the Humanities. Original version available for viewing and download at <a href="http://www.perseus.tufts.edu/">http://www.perseus.tufts.edu/</a>. This application is ©2018–2020, Christopher W. Blackwell, licensed under the <a href="https://www.gnu.org/licenses/gpl-3.0.en.html">GPL 3.0</a>. CITE/CTS is ©2002–2018 Neel Smith and Christopher Blackwell. The implementations of the <a href="http://cite-architecture.github.io">CITE</a> were written by Neel Smith and Christopher Blackwell using <a href="https://www.scala-lang.org">Scala</a>, <a href="http://www.scala-js.org">Scala-JS</a>, and <a href="https://github.com/ThoughtWorksInc/Binding.scala">Binding.scala</a>. Licensed under the <a href="https://www.gnu.org/licenses/gpl-3.0.en.html">GPL 3.0</a>. The dictionary data is <a href="https://github.com/Eumaeus/cex_lewis_and_short">is on Github</a>. Sourcecode on <a href="https://github.com/Eumaeus/cite-lsj-browser">GitHub</a>. Report bugs by <a href="https://github.com/Eumaeus/cite-lsj-browser/issues">filing issues on GitHub.</a>
 		</p>
 	}
 

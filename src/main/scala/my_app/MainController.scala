@@ -42,7 +42,9 @@ object MainController {
 		loadIndex(MainModel.indexFile)
 		MainModel.requestParameterUrn.value = MainController.getRequestUrn
 		MainModel.requestParameterUrn.value match {
-			case Some(u) => MainController.initUrnQuery(u)
+			case Some(u) => {
+				MainController.initUrnQuery(u)
+			}
 			case _ => // do nothing
 		}
 	}
@@ -356,7 +358,13 @@ object MainController {
 							val decryptedString:String = js.URIUtils.decodeURIComponent(parts(1))
 							val decryptedUrn:Option[Cite2Urn] = {
 								parts(1).take(9) match {
-									case ("urn:cite2") => Some(Cite2Urn(decryptedString).dropProperty)
+									case ("urn:cite2") => {
+										val u:Cite2Urn = Cite2Urn(decryptedString)
+										u.propertyOption match {
+											case Some(po) => Some(u.dropProperty)
+											case None => Some(u) 
+										}
+									}
 									case _ => {
 										None
 									}

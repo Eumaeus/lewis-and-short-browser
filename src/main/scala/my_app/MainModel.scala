@@ -132,7 +132,7 @@ object MainModel {
 	def updateIndex(contents:String):Unit = {
 		try {
 			val tempIndex:Vector[LexIndex] = {
-				contents.lines.map( is => {
+				contents.split("\n").toVector.map( is => {
 					val selector = is.split("#")(0)
 					val ucodeKey = is.split("#")(1)
 					//val terms = is.split("#")(3)
